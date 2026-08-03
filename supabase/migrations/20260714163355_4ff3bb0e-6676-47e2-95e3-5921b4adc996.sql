@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.set_business_settings_updated_at() FROM PUBLIC, anon, authenticated;
