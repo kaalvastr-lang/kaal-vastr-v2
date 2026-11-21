@@ -27,6 +27,8 @@ import {
   Link as LinkIcon,
   Plus,
   Settings as SettingsIcon,
+  PackagePlus,
+  ScanBarcode,
 } from "lucide-react";
 import {
   LineChart,
@@ -60,6 +62,9 @@ import {
 import { StatCard } from "@/components/kv/StatCard";
 import { GlassCard } from "@/components/kv/GlassCard";
 import { InvoiceModal } from "@/components/kv/InvoiceModal";
+import { StockInSection } from "@/components/kv/stock-in/StockInSection";
+import { ScanBillingSection } from "@/components/kv/scan-billing/ScanBillingSection";
+import { BillingModeSwitch } from "@/components/kv/barcode/BillingModeSwitch";
 import {
   generateInvoiceNumber,
   generatePublicToken,
@@ -139,6 +144,8 @@ type Section =
   | "analytics"
   | "inventory"
   | "products"
+  | "stock-in"
+  | "scan-billing"
   | "sales"
   | "settings";
 
@@ -194,6 +201,8 @@ function DashboardInner() {
     { id: "analytics", label: "Sales Analytics", icon: BarChart3 },
     { id: "inventory", label: "Inventory", icon: Boxes },
     { id: "products", label: "Products", icon: Package },
+    { id: "stock-in", label: "Stock In", icon: PackagePlus },
+    { id: "scan-billing", label: "Scan Billing", icon: ScanBarcode },
     { id: "sales", label: "Sales", icon: Receipt },
     { id: "settings", label: "Settings", icon: SettingsIcon },
   ];
@@ -299,14 +308,24 @@ function DashboardInner() {
               />
             )}
             {section === "new-sale" && (
-              <NewSale
-                products={products}
-                onCreated={(inv) => {
-                  setActiveInvoice(inv);
-                  setSection("overview");
-                }}
+              <>
+                <BillingModeSwitch value="new-sale" onChange={(m) => setSection(m)} />
+                <NewSale
+                  products={products}
+                  onCreated={(inv) => {
+                    setActiveInvoice(inv);
+                    setSection("overview");
+                  }}
+                />
+              </>
+            )}
+            {section === "scan-billing" && (
+              <ScanBillingSection
+                onCreated={(inv) => setActiveInvoice(inv)}
+                onModeChange={(m) => setSection(m)}
               />
             )}
+            {section === "stock-in" && <StockInSection />}
             {section === "inventory" && <InventorySection />}
             {section === "analytics" && <AnalyticsSection />}
             {section === "products" && <ProductsSection products={products} />}
