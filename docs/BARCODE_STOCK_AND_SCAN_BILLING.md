@@ -41,7 +41,8 @@ File: `supabase/migrations/20261113100000_barcode_inventory.sql`
 RLS stays on everywhere. New tables are readable only by `admin`; clients cannot write `product_variants` directly;
 both functions re-check `has_role(auth.uid(),'admin')` and are not executable by `anon`. No service-role key is used in the browser.
 
-**Apply:** automatically on every push to `main` by the GitHub Action - see `docs/DEPLOYMENT_AND_MIGRATIONS.md` (one-time secret setup). Nothing existing is dropped or overwritten, and no stock is changed by the migrations; they are safe to run more than once.
+**Apply:** Supabase Dashboard → SQL editor → paste the file → Run; or `supabase db push` from the project folder. It only adds objects
+(safe to run once; uses `IF NOT EXISTS` where possible). Nothing existing is dropped or overwritten, and no stock is changed by the migration.
 
 **Optional fix I found** (not applied): `supabase/optional/drop_duplicate_stock_trigger.sql` — the old migrations leave two stock triggers on
 `sales`, which can make `products.stock` drift by the last sold quantity after Normal Billing. Scan Billing is immune; read that file before applying.
@@ -126,9 +127,3 @@ Checklist: Stock In 20 × Black/M → 20 labels print and scan back to the right
 * Discount in Scan Billing is bill-level (% or ₹), shared proportionally across lines; the existing manual billing's per-line discount is unchanged.
 * Print history/settings: scanner, label and printer choices are stored per browser (per counter PC), not in the database.
 * Invoice share: the invoice window opens after each sale (WhatsApp/SMS buttons), rather than auto-opening WhatsApp.
-
-## 11. Later additions
-
-* **Number sizes** - Stock In has a *Letter sizes / Number sizes* switch (28, 30, 32 … 44, plus *Add all*). Any other size can still be typed. Size columns are kept in order.
-* **Split payments** - Normal Billing and Scan Billing both have *Split payment (two methods)*: pick the first method and amount, the second method automatically takes the rest (*Half & half* button). The bill stores e.g. `Cash 500 + UPI 300` in the existing payment column, so invoices, the public invoice page and the PDF show it, and Sales Analytics splits the amounts between Cash / UPI / Card. Scan Billing also verifies the amounts in the database against the bill total.
-* **`variant` column** - `20261122090000_ensure_variant_columns.sql` (see DEPLOYMENT_AND_MIGRATIONS.md).

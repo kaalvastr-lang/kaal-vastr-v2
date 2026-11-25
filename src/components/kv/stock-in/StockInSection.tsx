@@ -24,26 +24,7 @@ import {
 import { ChipInput } from "./ChipInput";
 import { LabelPrintTable, type LabelRow } from "./LabelPrintTable";
 
-// Letter sizes (tops) and number sizes (waist / shoe style: 28, 30, 32…). Any other size can still be typed.
-const SIZE_SETS = {
-  letter: ["S", "M", "L", "XL", "XXL", "Free"],
-  number: ["28", "30", "32", "34", "36", "38", "40", "42", "44"],
-} as const;
-type SizeSet = keyof typeof SIZE_SETS;
-const LETTER_ORDER = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL", "3XL", "4XL", "FREE"];
-
-/** Keeps size columns tidy: numbers ascending, known letter sizes small→large, otherwise as typed. */
-function sortSizes(sizes: string[]): string[] {
-  if (sizes.length > 1 && sizes.every((s) => /^\d+(\.\d+)?$/.test(s))) {
-    return [...sizes].sort((a, b) => Number(a) - Number(b));
-  }
-  if (sizes.length > 1 && sizes.every((s) => LETTER_ORDER.includes(s.toUpperCase()))) {
-    return [...sizes].sort(
-      (a, b) => LETTER_ORDER.indexOf(a.toUpperCase()) - LETTER_ORDER.indexOf(b.toUpperCase()),
-    );
-  }
-  return sizes;
-}
+const SIZE_PRESETS = ["S", "M", "L", "XL", "XXL", "Free"];
 const COLOUR_PRESETS = ["Black", "White", "Navy", "Grey"];
 
 interface ExistingProduct {
@@ -83,9 +64,7 @@ const cellKey = (colour: string, size: string) => `${colour}\u0000${size}`;
 function ReceiveStock() {
   const qc = useQueryClient();
   const [form, setForm] = useState<FormState>(EMPTY);
-  const [sizes, setSizesRaw] = useState<string[]>([]);
-  const setSizes = (v: string[]) => setSizesRaw(sortSizes(v));
-  const [sizeSet, setSizeSet] = useState<SizeSet>("letter");
+  const [sizes, setSizes] = useState<string[]>([]);
   const [colours, setColours] = useState<string[]>([]);
   const [qty, setQty] = useState<Record<string, string>>({});
   const [result, setResult] = useState<StockInResult | null>(null);
@@ -215,7 +194,7 @@ function ReceiveStock() {
 
   const reset = () => {
     setForm(EMPTY);
-    setSizesRaw([]);
+    setSizes([]);
     setColours([]);
     setQty({});
     setResult(null);
@@ -375,46 +354,12 @@ function ReceiveStock() {
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor="si-sizes">Sizes</Label>
-            <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Size type">
-              {(
-                [
-                  ["letter", "Letter sizes (S, M, L…)"],
-                  ["number", "Number sizes (28, 30, 32…)"],
-                ] as const
-              ).map(([id, text]) => (
-                <button
-                  key={id}
-                  type="button"
-                  aria-pressed={sizeSet === id}
-                  onClick={() => setSizeSet(id)}
-                  className={
-                    "rounded-md border px-3 py-1 text-xs transition-colors " +
-                    (sizeSet === id
-                      ? "border-[#d4af37]/60 bg-[#d4af37]/15 text-[#f0d67a]"
-                      : "border-border text-muted-foreground hover:text-foreground")
-                  }
-                >
-                  {text}
-                </button>
-              ))}
-              <button
-                type="button"
-                className="ml-auto rounded-md border border-dashed border-border px-3 py-1 text-xs text-muted-foreground hover:text-foreground"
-                onClick={() => {
-                  const next = [...sizes];
-                  for (const p of SIZE_SETS[sizeSet]) if (!next.includes(p)) next.push(p);
-                  setSizes(next);
-                }}
-              >
-                + Add all {sizeSet === "number" ? "28–44" : "letter sizes"}
-              </button>
-            </div>
             <ChipInput
               id="si-sizes"
               values={sizes}
               onChange={setSizes}
               placeholder="Type a size, press Enter"
-              presets={[...SIZE_SETS[sizeSet]]}
+              presets={SIZE_PRESETS}
               transform={(s) => s.toUpperCase()}
             />
           </div>

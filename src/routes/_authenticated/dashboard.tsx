@@ -65,8 +65,6 @@ import { InvoiceModal } from "@/components/kv/InvoiceModal";
 import { StockInSection } from "@/components/kv/stock-in/StockInSection";
 import { ScanBillingSection } from "@/components/kv/scan-billing/ScanBillingSection";
 import { BillingModeSwitch } from "@/components/kv/barcode/BillingModeSwitch";
-import { PaymentSplitEditor } from "@/components/kv/PaymentSplitEditor";
-import { usePaymentSplit } from "@/hooks/use-payment-split";
 import {
   generateInvoiceNumber,
   generatePublicToken,

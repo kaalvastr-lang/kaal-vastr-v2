@@ -1,6 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
-import type { PaymentPart } from "@/lib/kv/payments";
 import { invoicePublicUrl, type InvoiceData, type InvoiceLine } from "@/lib/kv/invoice";
 
 /**
@@ -161,10 +160,7 @@ export interface ScanSaleInput {
   requestKey: string;
   customerName: string;
   customerMobile: string;
-  /** Used when `payments` is not given (one method pays the whole bill). */
   paymentMethod: "Cash" | "UPI" | "Card";
-  /** Split payment, e.g. Cash 500 + UPI 300. The database checks it adds up to the bill total. */
-  payments?: PaymentPart[];
   discountType: "percent" | "amount";
   discountValue: number;
   items: { variantId: string; quantity: number }[];
@@ -205,9 +201,6 @@ export async function completeScanSale(
     p_customer_name: input.customerName,
     p_customer_mobile: input.customerMobile,
     p_payment_method: input.paymentMethod,
-    p_payments: (input.payments && input.payments.length > 1
-      ? input.payments.map((p) => ({ method: p.method, amount: p.amount }))
-      : null) as unknown as Json,
     p_discount_type: input.discountType,
     p_discount_value: input.discountValue,
     p_items: input.items.map((i) => ({
