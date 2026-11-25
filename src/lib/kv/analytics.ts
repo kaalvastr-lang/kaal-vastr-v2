@@ -3,6 +3,8 @@
  * Pure functions only, so they can be unit-tested and reused by any surface.
  */
 
+import { decodePayments } from "@/lib/kv/payments";
+
 export type PeriodKey =
   | "today"
   | "yesterday"
@@ -104,6 +106,13 @@ export function computeMetrics(rows: SaleRow[]): AnalyticsMetrics {
   const live = rows.filter((r) => !r.is_returned);
   const bills = new Set(live.map((r) => r.invoice_number));
 
+  // A bill's total is the sum of its lines; a split payment ("Cash 500 + UPI 300") is shared out
+  // across the lines in the same proportion, so cash/UPI/card totals still add up to total sales.
+  const billTotals = new Map<string, number>();
+  for (const r of live) {
+    billTotals.set(r.invoice_number, (billTotals.get(r.invoice_number) ?? 0) + (Number(r.total_amount) || 0));
+  }
+
   let totalSales = 0;
   let totalProfit = 0;
   let cashSales = 0;
@@ -116,10 +125,14 @@ export function computeMetrics(rows: SaleRow[]): AnalyticsMetrics {
     totalSales += amount;
     totalProfit += Number(r.profit) || 0;
     totalItemsSold += Number(r.quantity) || 0;
-    const m = method(r.payment_method);
-    if (m === "cash") cashSales += amount;
-    else if (m === "upi") upiSales += amount;
-    else if (m === "card") cardSales += amount;
+    const billTotal = billTotals.get(r.invoice_number) ?? 0;
+    for (const part of decodePayments(r.payment_method, billTotal)) {
+      const share = billTotal > 0 ? (amount * part.amount) / billTotal : 0;
+      const m = method(part.method);
+      if (m === "cash") cashSales += share;
+      else if (m === "upi") upiSales += share;
+      else if (m === "card") cardSales += share;
+    }
   }
 
   return {

@@ -1,7 +1,7 @@
 
 CREATE TABLE public.business_settings (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  business_name text NOT NULL DEFAULT 'My Business',
+  business_name text NOT NULL DEFAULT 'Kaal Vastr',
   business_logo_url text,
   whatsapp_number text,
   business_mobile text,
@@ -55,5 +55,5 @@ CREATE TRIGGER trg_business_settings_updated_at
 
 -- Seed a single default row so the app can always load settings.
 INSERT INTO public.business_settings (business_name)
-SELECT 'My Business'
+SELECT 'Kaal Vastr'
 WHERE NOT EXISTS (SELECT 1 FROM public.business_settings);

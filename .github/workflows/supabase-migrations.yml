@@ -1,0 +1,44 @@
+name: Apply Supabase migrations
+
+# Runs whenever migrations change on main, so a push to GitHub updates the client's Supabase
+# database (the same push also triggers the Vercel deploy). No SQL needs to be pasted by hand.
+#
+# One-time setup: add the repository secret SUPABASE_DB_URL
+#   (Supabase dashboard -> Connect -> "Session pooler" connection string, with the real password).
+# See docs/DEPLOYMENT_AND_MIGRATIONS.md.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+      - "scripts/apply-supabase-migrations.sh"
+      - ".github/workflows/supabase-migrations.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: supabase-migrations
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the database secret is set
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::Repository secret SUPABASE_DB_URL is not set. See docs/DEPLOYMENT_AND_MIGRATIONS.md."
+            exit 1
+          fi
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 3.2.0
+
+      - name: Apply pending migrations
+        run: bash scripts/apply-supabase-migrations.sh

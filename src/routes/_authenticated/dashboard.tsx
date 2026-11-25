@@ -27,6 +27,8 @@ import {
   Link as LinkIcon,
   Plus,
   Settings as SettingsIcon,
+  PackagePlus,
+  ScanBarcode,
 } from "lucide-react";
 import {
   LineChart,
@@ -60,6 +62,11 @@ import {
 import { StatCard } from "@/components/kv/StatCard";
 import { GlassCard } from "@/components/kv/GlassCard";
 import { InvoiceModal } from "@/components/kv/InvoiceModal";
+import { StockInSection } from "@/components/kv/stock-in/StockInSection";
+import { ScanBillingSection } from "@/components/kv/scan-billing/ScanBillingSection";
+import { BillingModeSwitch } from "@/components/kv/barcode/BillingModeSwitch";
+import { PaymentSplitEditor } from "@/components/kv/PaymentSplitEditor";
+import { usePaymentSplit } from "@/hooks/use-payment-split";
 import {
   generateInvoiceNumber,
   generatePublicToken,
@@ -139,6 +146,8 @@ type Section =
   | "analytics"
   | "inventory"
   | "products"
+  | "stock-in"
+  | "scan-billing"
   | "sales"
   | "settings";
 
@@ -194,6 +203,8 @@ function DashboardInner() {
     { id: "analytics", label: "Sales Analytics", icon: BarChart3 },
     { id: "inventory", label: "Inventory", icon: Boxes },
     { id: "products", label: "Products", icon: Package },
+    { id: "stock-in", label: "Stock In", icon: PackagePlus },
+    { id: "scan-billing", label: "Scan Billing", icon: ScanBarcode },
     { id: "sales", label: "Sales", icon: Receipt },
     { id: "settings", label: "Settings", icon: SettingsIcon },
   ];
@@ -299,14 +310,24 @@ function DashboardInner() {
               />
             )}
             {section === "new-sale" && (
-              <NewSale
-                products={products}
-                onCreated={(inv) => {
-                  setActiveInvoice(inv);
-                  setSection("overview");
-                }}
+              <>
+                <BillingModeSwitch value="new-sale" onChange={(m) => setSection(m)} />
+                <NewSale
+                  products={products}
+                  onCreated={(inv) => {
+                    setActiveInvoice(inv);
+                    setSection("overview");
+                  }}
+                />
+              </>
+            )}
+            {section === "scan-billing" && (
+              <ScanBillingSection
+                onCreated={(inv) => setActiveInvoice(inv)}
+                onModeChange={(m) => setSection(m)}
               />
             )}
+            {section === "stock-in" && <StockInSection />}
             {section === "inventory" && <InventorySection />}
             {section === "analytics" && <AnalyticsSection />}
             {section === "products" && <ProductsSection products={products} />}
@@ -777,7 +798,6 @@ function NewSale({
   const qc = useQueryClient();
   const { data: business = DEFAULT_BUSINESS } = useBusinessSettings();
   const [customer, setCustomer] = useState({ name: "", mobile: "" });
-  const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [lines, setLines] = useState<CartLine[]>([makeCartLine()]);
 
   const productMap = useMemo(() => {
@@ -819,11 +839,15 @@ function NewSale({
     { subtotal: 0, discount: 0, gst: 0, total: 0, profit: 0 },
   );
 
+  // One method, or a split such as Cash + UPI (stored as text in sales.payment_method).
+  const pay = usePaymentSplit(grand.total);
+
   const createSale = useMutation({
     mutationFn: async () => {
       if (!customer.name.trim() || !customer.mobile.trim())
         throw new Error("Customer name and mobile are required");
       if (!computed.length) throw new Error("Add at least one product");
+      if (pay.error) throw new Error(pay.error);
 
       const invoice_number = generateInvoiceNumber();
       const public_token = generatePublicToken(10);
@@ -853,7 +877,7 @@ function NewSale({
           discount: c.discount,
           total_amount: c.total,
           profit: c.profit,
-          payment_method: paymentMethod,
+          payment_method: pay.encoded,
           payment_status: "Paid",
         });
       }
@@ -901,7 +925,7 @@ function NewSale({
         subtotal: items.reduce((a, i) => a + i.unitPrice * i.quantity, 0),
         gstAmount: grand.gst,
         total: items.reduce((a, i) => a + i.lineTotal, 0),
-        paymentMethod,
+        paymentMethod: first.payment_method,
         publicToken: public_token,
         publicUrl: invoicePublicUrl(public_token),
       };
@@ -1012,16 +1036,7 @@ function NewSale({
 
           <div className="grid gap-3 sm:grid-cols-[1fr_240px]">
             <Field label="Payment Method">
-              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Cash">Cash</SelectItem>
-                  <SelectItem value="UPI">UPI</SelectItem>
-                  <SelectItem value="Card">Card</SelectItem>
-                </SelectContent>
-              </Select>
+              <PaymentSplitEditor pay={pay} total={grand.total} idPrefix="ns" />
             </Field>
             <div className="rounded-md border border-border bg-secondary/30 p-3 text-sm">
               <Row label="Subtotal"><span className="font-money">{rupee(grand.subtotal)}</span></Row>
@@ -1599,7 +1614,7 @@ function SettingsSection() {
   const save = useMutation({
     mutationFn: async () => {
       const payload = {
-        business_name: form.business_name?.trim() || "My Business",
+        business_name: form.business_name?.trim() || "Kaal Vastr",
         business_logo_url: form.business_logo_url?.trim() || null,
         whatsapp_number: form.whatsapp_number?.trim() || null,
         business_mobile: form.business_mobile?.trim() || null,

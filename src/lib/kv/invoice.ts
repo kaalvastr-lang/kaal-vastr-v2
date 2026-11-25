@@ -170,7 +170,7 @@ function toWhatsAppRequest(inv: InvoiceData, business: BusinessSettings): WhatsA
     invoiceNumber: inv.invoiceNumber,
     invoiceUrl: url,
     pdfUrl: null,
-    businessName: business.business_name || "Our Store",
+    businessName: "Kaal Vastr",
     countryCode: business.default_country_code || "91",
     footer: business.invoice_footer,
   };

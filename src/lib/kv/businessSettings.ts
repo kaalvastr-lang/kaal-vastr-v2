@@ -16,7 +16,7 @@ export type BusinessSettings = {
 
 export const DEFAULT_BUSINESS: BusinessSettings = {
   id: "",
-  business_name: "My Business",
+  business_name: "Kaal Vastr",
   business_logo_url: null,
   whatsapp_number: null,
   business_mobile: null,

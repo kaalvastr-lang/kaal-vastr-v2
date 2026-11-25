@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      barcode_print_jobs: {
+        Row: {
+          barcode: string
+          colour: string | null
+          copies: number
+          created_at: string
+          created_by: string | null
+          error: string | null
+          id: string
+          printer_name: string | null
+          product_name: string | null
+          size: string | null
+          status: string
+          variant_id: string | null
+        }
+        Insert: {
+          barcode: string
+          colour?: string | null
+          copies?: number
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          id?: string
+          printer_name?: string | null
+          product_name?: string | null
+          size?: string | null
+          status?: string
+          variant_id?: string | null
+        }
+        Update: {
+          barcode?: string
+          colour?: string | null
+          copies?: number
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          id?: string
+          printer_name?: string | null
+          product_name?: string | null
+          size?: string | null
+          status?: string
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barcode_print_jobs_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_settings: {
         Row: {
           address: string | null
@@ -178,6 +231,50 @@ export type Database = {
         }
         Relationships: []
       }
+      product_variants: {
+        Row: {
+          barcode: string
+          colour: string
+          created_at: string
+          id: string
+          is_active: boolean
+          product_id: string
+          size: string
+          stock: number
+          updated_at: string
+        }
+        Insert: {
+          barcode: string
+          colour?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          product_id: string
+          size: string
+          stock?: number
+          updated_at?: string
+        }
+        Update: {
+          barcode?: string
+          colour?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          product_id?: string
+          size?: string
+          stock?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -201,6 +298,7 @@ export type Database = {
       }
       sales: {
         Row: {
+          barcode: string | null
           created_at: string
           created_by: string | null
           customer_mobile: string
@@ -222,8 +320,10 @@ export type Database = {
           unit_cost: number
           unit_price: number
           variant: string | null
+          variant_id: string | null
         }
         Insert: {
+          barcode?: string | null
           created_at?: string
           created_by?: string | null
           customer_mobile: string
@@ -245,8 +345,10 @@ export type Database = {
           unit_cost?: number
           unit_price: number
           variant?: string | null
+          variant_id?: string | null
         }
         Update: {
+          barcode?: string | null
           created_at?: string
           created_by?: string | null
           customer_mobile?: string
@@ -268,6 +370,7 @@ export type Database = {
           unit_cost?: number
           unit_price?: number
           variant?: string | null
+          variant_id?: string | null
         }
         Relationships: [
           {
@@ -275,6 +378,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
             referencedColumns: ["id"]
           },
         ]
@@ -322,6 +432,23 @@ export type Database = {
           unit_price: number
           variant: string
         }[]
+      }
+      kv_complete_sale: {
+        Args: {
+          p_customer_mobile: string
+          p_customer_name: string
+          p_discount_type: string
+          p_discount_value: number
+          p_items: Json
+          p_payment_method: string
+          p_payments?: Json
+          p_request_key: string
+        }
+        Returns: Json
+      }
+      kv_stock_in: {
+        Args: { p_product: Json; p_request_key: string; p_variants: Json }
+        Returns: Json
       }
       has_role: {
         Args: {

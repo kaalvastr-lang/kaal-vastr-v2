@@ -82,7 +82,7 @@ function BillsPage() {
                 <div className="flex shrink-0 items-center gap-2">
                   <span className="font-display font-semibold">{formatINR(sale.total)}</span>
                   <a
-                    href={waLinkForInvoice(sale, business?.business_name ?? "Kaal Vastr")}
+                    href={waLinkForInvoice(sale, "Kaal Vastr")}
                     target="_blank"
                     rel="noreferrer"
                     aria-label={`Send ${sale.invoiceNo} on WhatsApp`}

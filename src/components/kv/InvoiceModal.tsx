@@ -43,7 +43,7 @@ export function InvoiceModal({
       invoiceNumber: invoice.invoiceNumber,
       invoiceUrl: url,
       pdfUrl: null,
-      businessName: business.business_name,
+      businessName: "Kaal Vastr",
       countryCode: business.default_country_code,
       footer: business.invoice_footer,
     });
