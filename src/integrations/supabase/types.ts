@@ -441,6 +441,7 @@ export type Database = {
           p_discount_value: number
           p_items: Json
           p_payment_method: string
+          p_payments?: Json
           p_request_key: string
         }
         Returns: Json

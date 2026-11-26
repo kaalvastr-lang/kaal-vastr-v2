@@ -22,6 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { GlassCard } from "@/components/kv/GlassCard";
+import { PaymentSplitEditor } from "@/components/kv/PaymentSplitEditor";
+import { usePaymentSplit } from "@/hooks/use-payment-split";
 import { OwnerOnly } from "@/components/kv/barcode/OwnerOnly";
 import { ScannerSettingsPanel } from "@/components/kv/barcode/ScannerSettingsPanel";
 import { ScannerStatus } from "@/components/kv/barcode/ScannerStatus";
@@ -105,7 +107,6 @@ function ScanBillingInner({
   const [search, setSearch] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [customer, setCustomer] = useState({ name: "", mobile: "" });
-  const [payment, setPayment] = useState<"Cash" | "UPI" | "Card">("Cash");
   const [discountType, setDiscountType] = useState<"percent" | "amount">("percent");
   const [discountValue, setDiscountValue] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
@@ -260,6 +261,8 @@ function ScanBillingInner({
     [cart, discountType, dv],
   );
   const pieces = cart.reduce((a, c) => a + c.qty, 0);
+  // One method, or a split such as Cash + UPI (the database verifies it adds up to the total).
+  const pay = usePaymentSplit(totals.total);
 
   const checkout = useMutation({
     mutationFn: async () => {
@@ -267,7 +270,8 @@ function ScanBillingInner({
       const input = {
         customerName: customer.name.trim(),
         customerMobile: customer.mobile.trim(),
-        paymentMethod: payment,
+        paymentMethod: pay.parts[0]!.method,
+        payments: pay.split ? pay.parts : undefined,
         discountType,
         discountValue: dv,
         items,
@@ -316,6 +320,7 @@ function ScanBillingInner({
     if (!customer.name.trim()) return setFormError("Enter the customer name.");
     if (!customer.mobile.trim()) return setFormError("Enter the customer mobile number.");
     if (discountType === "percent" && dv > 100) return setFormError("Discount cannot exceed 100%.");
+    if (pay.error) return setFormError(pay.error);
     setFormError(null);
     checkout.mutate();
   };
@@ -598,16 +603,7 @@ function ScanBillingInner({
               </div>
               <div className="space-y-1.5">
                 <Label>Payment</Label>
-                <Select value={payment} onValueChange={(v) => setPayment(v as typeof payment)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Cash">Cash</SelectItem>
-                    <SelectItem value="UPI">UPI</SelectItem>
-                    <SelectItem value="Card">Card</SelectItem>
-                  </SelectContent>
-                </Select>
+                <PaymentSplitEditor pay={pay} total={totals.total} idPrefix="sb" />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="sb-disc">Discount</Label>

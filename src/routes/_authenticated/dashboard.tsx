@@ -65,6 +65,8 @@ import { InvoiceModal } from "@/components/kv/InvoiceModal";
 import { StockInSection } from "@/components/kv/stock-in/StockInSection";
 import { ScanBillingSection } from "@/components/kv/scan-billing/ScanBillingSection";
 import { BillingModeSwitch } from "@/components/kv/barcode/BillingModeSwitch";
+import { PaymentSplitEditor } from "@/components/kv/PaymentSplitEditor";
+import { usePaymentSplit } from "@/hooks/use-payment-split";
 import {
   generateInvoiceNumber,
   generatePublicToken,
@@ -1612,7 +1614,7 @@ function SettingsSection() {
   const save = useMutation({
     mutationFn: async () => {
       const payload = {
-        business_name: form.business_name?.trim() || "Kaal Vastr",
+        business_name: form.business_name?.trim() || "My Business",
         business_logo_url: form.business_logo_url?.trim() || null,
         whatsapp_number: form.whatsapp_number?.trim() || null,
         business_mobile: form.business_mobile?.trim() || null,
